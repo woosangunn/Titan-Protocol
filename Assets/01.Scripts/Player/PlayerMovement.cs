@@ -49,4 +49,10 @@ public class PlayerMovement : MonoBehaviour
         dashDirection = dir.normalized;
         dashTimer = dashDuration;
     }
+
+    public void StopImmediately()
+    {
+        rb.linearVelocity = Vector2.zero;
+        isDashing = false;
+    }
 }

@@ -16,9 +16,7 @@ public class PlayerInput : MonoBehaviour
         if (Input.GetKey(KeyCode.W)) v += 1f;
         if (Input.GetKey(KeyCode.S)) v -= 1f;
 
-        Vector2 input = new Vector2(h, v);
-        Move = input.normalized;
-
+        Move = new Vector2(h, v).normalized;
         DashPressed = Input.GetKeyDown(KeyCode.Space);
         LeftClick = Input.GetMouseButtonDown(0);
         RightClick = Input.GetMouseButtonDown(1);

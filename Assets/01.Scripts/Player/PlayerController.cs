@@ -5,45 +5,62 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerAttack))]
 public class PlayerController : MonoBehaviour
 {
+    public float grappleSpeed = 25f;
+    private bool isGrappling = false;
+    private Vector2 grappleTarget;
+
     private PlayerInput input;
     private PlayerMovement movement;
     private PlayerAttack attack;
+    private Rigidbody2D rb;
 
     void Awake()
     {
         input = GetComponent<PlayerInput>();
         movement = GetComponent<PlayerMovement>();
         attack = GetComponent<PlayerAttack>();
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update()
     {
         input.HandleInput();
 
-        // ¸¶¿ì½º ¹æÇâÀ¸·Î ÃÑ±¸ È¸Àü
-        RotateToMouse(attack.gunPivot, input.MouseWorldPos2D);
-        RotateToMouse(attack.chainPivot, input.MouseWorldPos2D);
-
-        if (input.DashPressed)
+        if (input.DashPressed && !isGrappling)
             movement.StartDash(input.Move);
 
         if (input.LeftClick)
             attack.ShootBullet(input.MouseWorldPos2D);
 
-        if (input.RightClick)
+        if (input.RightClick && !isGrappling)
             attack.ShootChain(input.MouseWorldPos2D);
     }
 
-    void RotateToMouse(Transform pivot, Vector2 mousePos)
-    {
-        Vector2 dir = (mousePos - (Vector2)pivot.position).normalized;
-        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        pivot.rotation = Quaternion.Euler(0, 0, angle);
-    }
-
-
     void FixedUpdate()
     {
-        movement.SetMoveDirection(input.Move);
+        if (isGrappling)
+        {
+            Vector2 toTarget = grappleTarget - (Vector2)transform.position;
+            if (toTarget.magnitude < 0.3f)
+            {
+                rb.linearVelocity = Vector2.zero;
+                isGrappling = false;
+            }
+            else
+            {
+                rb.linearVelocity = toTarget.normalized * grappleSpeed;
+            }
+        }
+        else
+        {
+            movement.SetMoveDirection(input.Move);
+        }
+    }
+
+    public void StartGrapple(Vector2 targetPos)
+    {
+        grappleTarget = targetPos;
+        isGrappling = true;
+        movement.StopImmediately(); // ëŒ€ì‰¬ ì¤‘ì´ë¼ë©´ ì¤‘ë‹¨
     }
 }
