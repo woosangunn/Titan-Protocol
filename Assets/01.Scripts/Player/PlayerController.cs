@@ -1,66 +1,67 @@
+
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerInput))]
-[RequireComponent(typeof(PlayerMovement))]
-[RequireComponent(typeof(PlayerAttack))]
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
-    public float grappleSpeed = 25f;
-    private bool isGrappling = false;
-    private Vector2 grappleTarget;
+    [Header("이동")]
+    public float moveSpeed = 5f;
+    public float dashSpeed = 15f;
+
+    private Rigidbody2D rb;
+    private Vector2 moveInput;
 
     private PlayerInput input;
     private PlayerMovement movement;
     private PlayerAttack attack;
-    private Rigidbody2D rb;
+    private PlayerGrappleHandler grapple;
 
     void Awake()
     {
+        rb = GetComponent<Rigidbody2D>();
+        rb.gravityScale = 0;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
         input = GetComponent<PlayerInput>();
         movement = GetComponent<PlayerMovement>();
         attack = GetComponent<PlayerAttack>();
-        rb = GetComponent<Rigidbody2D>();
+        grapple = GetComponent<PlayerGrappleHandler>();
     }
 
     void Update()
     {
         input.HandleInput();
 
-        if (input.DashPressed && !isGrappling)
-            movement.StartDash(input.Move);
+        // 사슬 발사 조건: 연결되지 않았을 때만 발사 허용
+        if (input.RightClick && !grapple.IsGrappleActive())
+        {
+            attack.ShootChain(input.MouseWorldPos2D);
+        }
 
         if (input.LeftClick)
+        {
             attack.ShootBullet(input.MouseWorldPos2D);
+        }
 
-        if (input.RightClick && !isGrappling)
-            attack.ShootChain(input.MouseWorldPos2D);
+        if (input.DashPressed)
+        {
+            if (grapple.IsGrappleActive())
+            {
+                if (input.Move.y > 0)
+                    grapple.DoGrappleDash();
+                else if (input.Move.x != 0)
+                    grapple.DoSwing(input.Move.x);
+            }
+            else
+            {
+                movement.StartDash(input.Move);
+            }
+        }
     }
 
     void FixedUpdate()
     {
-        if (isGrappling)
-        {
-            Vector2 toTarget = grappleTarget - (Vector2)transform.position;
-            if (toTarget.magnitude < 0.3f)
-            {
-                rb.linearVelocity = Vector2.zero;
-                isGrappling = false;
-            }
-            else
-            {
-                rb.linearVelocity = toTarget.normalized * grappleSpeed;
-            }
-        }
-        else
-        {
-            movement.SetMoveDirection(input.Move);
-        }
-    }
-
-    public void StartGrapple(Vector2 targetPos)
-    {
-        grappleTarget = targetPos;
-        isGrappling = true;
-        movement.StopImmediately(); // 대쉬 중이라면 중단
+        if (grapple.IsGrappleActive()) return;
+        movement.SetMoveDirection(input.Move);
     }
 }
