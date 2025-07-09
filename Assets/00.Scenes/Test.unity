@@ -1062,7 +1062,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  dashSpeed: 10
+  dashSpeed: 20
   dashDuration: 0.2
 --- !u!114 &2113365906
 MonoBehaviour:
@@ -1206,8 +1206,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b5d3e55b84e2ef44905ffb44b453ecf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grappleSpeed: 10
-  swingForce: 10
+  grappleSpeed: 20
+  swingForce: 20
 --- !u!1 &2119932264
 GameObject:
   m_ObjectHideFlags: 0
