@@ -1062,7 +1062,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  dashSpeed: 15
+  dashSpeed: 10
   dashDuration: 0.2
 --- !u!114 &2113365906
 MonoBehaviour:
@@ -1076,8 +1076,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45d025fe1be0c774a8e3302e1ac4e4c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  dashSpeed: 15
 --- !u!61 &2113365907
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1208,8 +1206,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b5d3e55b84e2ef44905ffb44b453ecf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grappleSpeed: 50
-  swingForce: 15
+  grappleSpeed: 10
+  swingForce: 10
 --- !u!1 &2119932264
 GameObject:
   m_ObjectHideFlags: 0

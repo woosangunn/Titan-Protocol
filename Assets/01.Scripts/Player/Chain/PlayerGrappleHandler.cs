@@ -3,8 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerGrappleHandler : MonoBehaviour
 {
-    public float grappleSpeed = 100f;
-    public float swingForce = 50f;
+    public float grappleSpeed = 20f;
+    public float swingForce = 10f;
 
     private Rigidbody2D rb;
     private DistanceJoint2D joint;
@@ -55,8 +55,7 @@ public class PlayerGrappleHandler : MonoBehaviour
             Vector2 toAnchor = grapplePoint - (Vector2)transform.position;
             Vector2 tangent = Vector2.Perpendicular(toAnchor.normalized) * Mathf.Sign(swingDirection);
 
-            rb.AddForce(tangent * swingForce, ForceMode2D.Impulse);
-            Debug.Log($"¢º¢º SWING Èû Àû¿ë: {tangent * swingForce}");
+            rb.AddForce(tangent * swingForce, ForceMode2D.Force); // Impulse ¡æ Force º¯°æ
         }
     }
 

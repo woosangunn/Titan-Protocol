@@ -3,10 +3,6 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("이동")]
-    public float moveSpeed = 5f;
-    public float dashSpeed = 15f;
-
     private Rigidbody2D rb;
     private PlayerInput input;
     private PlayerMovement movement;
