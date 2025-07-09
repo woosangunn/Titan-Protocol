@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -9,8 +8,6 @@ public class PlayerController : MonoBehaviour
     public float dashSpeed = 15f;
 
     private Rigidbody2D rb;
-    private Vector2 moveInput;
-
     private PlayerInput input;
     private PlayerMovement movement;
     private PlayerAttack attack;
@@ -32,36 +29,41 @@ public class PlayerController : MonoBehaviour
     {
         input.HandleInput();
 
-        // 사슬 발사 조건: 연결되지 않았을 때만 발사 허용
-        if (input.RightClick && !grapple.IsGrappleActive())
-        {
+        if (input.RightClick && !grapple.IsAttached)
             attack.ShootChain(input.MouseWorldPos2D);
-        }
 
         if (input.LeftClick)
-        {
             attack.ShootBullet(input.MouseWorldPos2D);
-        }
 
         if (input.DashPressed)
         {
-            if (grapple.IsGrappleActive())
+            Vector2 dashDir = input.LastMove;
+            Debug.Log($"[DashPressed] Move: {dashDir} | y:{dashDir.y} x:{dashDir.x}");
+
+            if (grapple.IsAttached)
             {
-                if (input.Move.y > 0)
+                if (dashDir.y > 0)
+                {
+                    Debug.Log("▶ W + Space → Grapple Dash");
                     grapple.DoGrappleDash();
-                else if (input.Move.x != 0)
-                    grapple.DoSwing(input.Move.x);
+                }
+                else if (dashDir.x != 0)
+                {
+                    Debug.Log("▶ A/D + Space → Grapple Swing");
+                    grapple.DoSwing(dashDir.x);
+                }
             }
             else
             {
-                movement.StartDash(input.Move);
+                Debug.Log("▶ 일반 Dash");
+                movement.StartDash(dashDir);
             }
         }
     }
 
     void FixedUpdate()
     {
-        if (grapple.IsGrappleActive()) return;
+        if (grapple.IsAttached) return;
         movement.SetMoveDirection(input.Move);
     }
 }

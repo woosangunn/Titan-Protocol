@@ -1,11 +1,10 @@
-// PlayerGrappleHandler.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerGrappleHandler : MonoBehaviour
 {
-    public float grappleSpeed = 25f;
-    public float swingForce = 10f;
+    public float grappleSpeed = 100f;
+    public float swingForce = 50f;
 
     private Rigidbody2D rb;
     private DistanceJoint2D joint;
@@ -16,10 +15,9 @@ public class PlayerGrappleHandler : MonoBehaviour
 
     private PlayerInput input;
 
-    public bool IsGrappleActive()
-    {
-        return IsAttached;
-    }
+    private float swingDirection = 0f;
+    private bool isSwinging = false;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -30,7 +28,6 @@ public class PlayerGrappleHandler : MonoBehaviour
         joint.autoConfigureDistance = false;
         joint.maxDistanceOnly = true;
 
-        // 줄 초기화
         line = gameObject.AddComponent<LineRenderer>();
         line.positionCount = 2;
         line.material = new Material(Shader.Find("Sprites/Default"));
@@ -46,17 +43,27 @@ public class PlayerGrappleHandler : MonoBehaviour
             line.SetPosition(0, transform.position);
             line.SetPosition(1, grapplePoint);
 
-            // 사슬 해제 조건: 우클릭 다시 누름
             if (input.RightClick)
-            {
-                Debug.Log("우클릭으로 사슬 해제 시도");
                 DetachGrapple();
-            }
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (isSwinging && IsAttached)
+        {
+            Vector2 toAnchor = grapplePoint - (Vector2)transform.position;
+            Vector2 tangent = Vector2.Perpendicular(toAnchor.normalized) * Mathf.Sign(swingDirection);
+
+            rb.AddForce(tangent * swingForce, ForceMode2D.Impulse);
+            Debug.Log($"▶▶ SWING 힘 적용: {tangent * swingForce}");
         }
     }
 
     public void AttachGrapple(Vector2 point)
     {
+        if (IsAttached) return;
+
         IsAttached = true;
         grapplePoint = point;
 
@@ -76,27 +83,30 @@ public class PlayerGrappleHandler : MonoBehaviour
     {
         if (!IsAttached) return;
 
-        DetachGrapple(); // 돌진 시 해제
-
         Vector2 dir = (grapplePoint - (Vector2)transform.position).normalized;
         rb.linearVelocity = dir * grappleSpeed;
+
+        Debug.Log($"▶▶ GRAPPLE DASH 실행됨 | 방향: {dir}, 속도: {grappleSpeed}");
+
+        Invoke(nameof(DetachGrapple), 0.2f);
     }
 
     public void DoSwing(float direction)
     {
         if (!IsAttached) return;
 
-        DetachGrapple(); // 스윙 시 해제
-
-        Vector2 force = new Vector2(0, 1f) + Vector2.right * direction;
-        rb.AddForce(force.normalized * swingForce, ForceMode2D.Impulse);
+        swingDirection = direction;
+        isSwinging = true;
     }
 
     public void DetachGrapple()
     {
-        Debug.Log("▶ 사슬 해제됨");
+        if (!IsAttached) return;
 
         IsAttached = false;
+        isSwinging = false;
+        swingDirection = 0f;
+
         joint.enabled = false;
         line.enabled = false;
     }

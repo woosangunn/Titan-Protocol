@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
@@ -33,7 +32,7 @@ public class PlayerAttack : MonoBehaviour
 
     public void ShootChain(Vector2 targetPos)
     {
-        if (grappleHandler.IsGrappleActive()) return; // 연결된 상태면 발사 금지
+        if (grappleHandler.IsAttached) return;
 
         Vector2 firePos = chainMuzzle.position;
         Vector2 dir = (targetPos - firePos).normalized;
@@ -43,6 +42,6 @@ public class PlayerAttack : MonoBehaviour
         chain.transform.rotation = Quaternion.Euler(0, 0, angle);
 
         var chainScript = chain.GetComponent<ChainProjectile>();
-        chainScript.Init(dir, grappleHandler.AttachGrapple); // 연결만 수행
+        chainScript.Init(dir, grappleHandler.AttachGrapple);
     }
 }
