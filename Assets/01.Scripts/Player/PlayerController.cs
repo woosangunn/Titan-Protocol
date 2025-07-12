@@ -25,34 +25,32 @@ public class PlayerController : MonoBehaviour
     {
         input.HandleInput();
 
+        // 사슬 발사 (붙어있지 않을 때만)
         if (input.RightClick && !grapple.IsAttached)
             attack.ShootChain(input.MouseWorldPos2D);
 
+        // 총 발사
         if (input.LeftClick)
             attack.ShootBullet(input.MouseWorldPos2D);
 
+        // Space 입력 처리
         if (input.DashPressed)
         {
             Vector2 dashDir = input.LastMove;
-            Debug.Log($"[DashPressed] Move: {dashDir} | y:{dashDir.y} x:{dashDir.x}");
 
             if (grapple.IsAttached)
             {
+                // W + Space → 그랩 대시
                 if (dashDir.y > 0)
-                {
-                    Debug.Log("▶ W + Space → Grapple Dash");
                     grapple.DoGrappleDash();
-                }
+                // A/D + Space → 스윙
                 else if (dashDir.x != 0)
-                {
-                    Debug.Log("▶ A/D + Space → Grapple Swing");
                     grapple.DoSwing(dashDir.x);
-                }
             }
             else
             {
-                Debug.Log("▶ 일반 Dash");
-                movement.StartDash(dashDir);
+                // 일반 대시 비활성화
+                // movement.StartDash(dashDir); // <- 필요시 다시 활성화
             }
         }
     }

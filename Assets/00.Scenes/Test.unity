@@ -152,6 +152,52 @@ Transform:
   - {fileID: 290540849}
   m_Father: {fileID: 2113365903}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &170436111
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 170436113}
+  - component: {fileID: 170436112}
+  m_Layer: 0
+  m_Name: "\u202FGhostPool"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &170436112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 170436111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f824013e285624ba33c4638e6537ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ghostPrefab: {fileID: 7564996706738100987, guid: 1b13091d0b08c7648b9b85306e5809be, type: 3}
+  poolSize: 20
+--- !u!4 &170436113
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 170436111}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &290540848
 GameObject:
   m_ObjectHideFlags: 0
@@ -1022,6 +1068,7 @@ GameObject:
   - component: {fileID: 2113365906}
   - component: {fileID: 2113365911}
   - component: {fileID: 2113365912}
+  - component: {fileID: 2113365913}
   - component: {fileID: 2113365908}
   - component: {fileID: 2113365907}
   m_Layer: 0
@@ -1208,6 +1255,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grappleSpeed: 20
   swingForce: 20
+  detachDelay: 0.2
+--- !u!114 &2113365913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2113365902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69590fe5c057a3e4bbca2cf9d7a8ce6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  trailPool: {fileID: 170436112}
+  sourceRenderer: {fileID: 0}
+  spawnInterval: 0.05
+  fadeDuration: 0.4
 --- !u!1 &2119932264
 GameObject:
   m_ObjectHideFlags: 0
@@ -1351,3 +1415,4 @@ SceneRoots:
   - {fileID: 2119932266}
   - {fileID: 1426228256}
   - {fileID: 519420032}
+  - {fileID: 170436113}
