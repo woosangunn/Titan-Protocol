@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerGrappleHandler : MonoBehaviour
@@ -24,6 +25,15 @@ public class PlayerGrappleHandler : MonoBehaviour
 
     private GhostSpawner ghostSpawner;    // 이동 궤적(고스트 트레일) 생성기 컴포넌트
 
+    public float maxAttachTime = 3f;
+    private float attachTimer = 0f;
+
+    public float RemainingChainTime()
+    {
+        return Mathf.Clamp(maxAttachTime - attachTimer, 0f, maxAttachTime);
+    }
+
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();            // Rigidbody2D 컴포넌트 가져오기
@@ -48,6 +58,11 @@ public class PlayerGrappleHandler : MonoBehaviour
 
     void Update()
     {
+        if (IsAttached)
+            attachTimer += Time.deltaTime;
+        else
+            attachTimer = 0f;
+
         if (IsAttached)
         {
             // 사슬 라인 시작점은 플레이어 위치, 끝점은 grapplePoint (연결된 지점)
@@ -99,10 +114,32 @@ public class PlayerGrappleHandler : MonoBehaviour
     {
         if (!IsAttached) return;    // 연결 안되어 있으면 무시
 
-        Vector2 dir = (grapplePoint - (Vector2)transform.position).normalized;  // 연결 지점 방향 단위벡터
-        rb.linearVelocity = dir * grappleSpeed;        // 해당 방향으로 속도 세팅 (대시 이동)
+        // 사슬 지점까지 직선 돌진 (프레임 단위 처리)
+        StopAllCoroutines();
+        StartCoroutine(GrappleDashCoroutine());
 
-        Invoke(nameof(StopAndDetach), detachDelay);    // 일정 시간 후 대시 멈추고 사슬 분리 호출
+        //Vector2 dir = (grapplePoint - (Vector2)transform.position).normalized;  // 연결 지점 방향 단위벡터
+        //rb.linearVelocity = dir * grappleSpeed;        // 해당 방향으로 속도 세팅 (대시 이동)
+
+        //Invoke(nameof(StopAndDetach), detachDelay);    // 일정 시간 후 대시 멈추고 사슬 분리 호출
+    }
+
+    private IEnumerator GrappleDashCoroutine()
+    {
+        while (true)
+        {
+            Vector2 toTarget = grapplePoint - (Vector2)transform.position;
+
+            if (toTarget.magnitude < 0.3f)
+            {
+                rb.linearVelocity = Vector2.zero;
+                DetachGrapple();
+                yield break;
+            }
+
+            rb.linearVelocity = toTarget.normalized * grappleSpeed;
+            yield return new WaitForFixedUpdate();
+        }
     }
 
     // 대시 멈추고 사슬 분리 함수
