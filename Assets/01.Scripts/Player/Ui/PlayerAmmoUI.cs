@@ -1,29 +1,27 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
-/// <summary>
-/// 탄약 정보를 표시하는 UI 전용 컴포넌트
-/// - PlayerStatus의 OnAmmoChanged 이벤트를 구독하여 UI 갱신
-/// - 탄약 게이지와 텍스트를 동시에 표시할 수 있음
-/// </summary>
 public class PlayerAmmoUI : MonoBehaviour
 {
     [Header("UI 참조")]
-    public Image ammoBarFill;   // 탄약 게이지 바 (Filled 타입 이미지)
-    public TMP_Text ammoText;   // 탄약 수치를 표시하는 텍스트 (예: "Ammo 10 / 30")
+    public TMP_Text ammoText;
 
-    private PlayerStatus status;    // 플레이어 상태 컴포넌트 참조 (탄약 정보 제공)
+    private PlayerStatus status;
+    private Coroutine animateCoroutine;
+    private int displayAmmo = 0;  // UI에 보여지는 탄약 수
+    private int maxAmmo = 0;
+
+    private float reloadAnimationSpeed = 0.05f; // 1발당 애니메이션 간격 (변경 가능)
 
     void Awake()
     {
-        // 씬에서 PlayerStatus 컴포넌트를 찾아 참조 연결
         status = Object.FindFirstObjectByType<PlayerStatus>();
 
         if (status == null)
         {
             Debug.LogError("[PlayerAmmoUI] PlayerStatus를 찾지 못했습니다.");
-            enabled = false;    // PlayerStatus 없으면 UI 갱신 불가능하므로 비활성화
+            enabled = false;
         }
     }
 
@@ -31,34 +29,77 @@ public class PlayerAmmoUI : MonoBehaviour
     {
         if (status == null) return;
 
-        // PlayerStatus의 탄약 변경 이벤트 구독
         status.OnAmmoChanged += UpdateAmmoUI;
-
-        // 초기 탄약 상태를 UI에 즉시 반영
         UpdateAmmoUI(status.CurrentAmmo, status.MaxAmmo);
     }
 
     void OnDisable()
     {
         if (status != null)
-            // 이벤트 구독 해제하여 메모리 누수 방지
             status.OnAmmoChanged -= UpdateAmmoUI;
     }
 
     /// <summary>
-    /// 탄약 상태 변경 시 호출되는 콜백 함수
-    /// - 탄약 게이지와 텍스트를 동기화하여 UI 갱신
+    /// PlayerStatus에서 호출됨
     /// </summary>
-    /// <param name="current">현재 탄약</param>
-    /// <param name="max">최대 탄약</param>
     public void UpdateAmmoUI(int current, int max)
     {
-        float ratio = max > 0 ? (float)current / max : 0f;
+        maxAmmo = max;
 
-        if (ammoBarFill != null)
-            ammoBarFill.fillAmount = ratio;
+        // 목표 탄약이 이미 표시 중인 수치와 같으면 애니메이션 중복 방지
+        if (animateCoroutine != null && current == displayAmmo)
+            return;
 
+        // 기존 애니메이션이 있다면 중지
+        if (animateCoroutine != null)
+            StopCoroutine(animateCoroutine);
+
+        // 1발씩 애니메이션으로 숫자 변화
+        animateCoroutine = StartCoroutine(AnimateAmmo(displayAmmo, current, max));
+    }
+
+    private IEnumerator AnimateAmmo(int from, int to, int max)
+    {
+        int current = from;
+
+        while (current != to)
+        {
+            if (to > current)
+                current++;
+            else
+                current--;  // 탄약 감소 시 애니메이션도 부드럽게 적용 가능
+
+            displayAmmo = current;
+            SetAmmoDisplay(displayAmmo, max);
+
+            yield return new WaitForSeconds(reloadAnimationSpeed);
+        }
+
+        animateCoroutine = null;
+    }
+
+    private void SetAmmoDisplay(int current, int max)
+    {
         if (ammoText != null)
+        {
             ammoText.text = $"Ammo {current} / {max}";
+            ammoText.color = GetAmmoColor(current, max);
+        }
+    }
+
+    private Color GetAmmoColor(int current, int max)
+    {
+        if (max <= 0) return Color.black;
+
+        float ratio = Mathf.Clamp01((float)current / max);
+        return Color.Lerp(Color.black, Color.white, ratio);
+    }
+
+    /// <summary>
+    /// 외부에서 장전 속도를 조절할 수 있는 함수 (옵션)
+    /// </summary>
+    public void SetReloadAnimationSpeed(float secondsPerAmmo)
+    {
+        reloadAnimationSpeed = secondsPerAmmo;
     }
 }
