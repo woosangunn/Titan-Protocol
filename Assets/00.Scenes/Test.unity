@@ -952,6 +952,52 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &891186946
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 891186948}
+  - component: {fileID: 891186947}
+  m_Layer: 0
+  m_Name: BulletPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &891186947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 891186946}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06464b4e32febd0419401e0d974aa6b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bulletPrefab: {fileID: 3337750690162418472, guid: f8977907a6e644f44a64844e9cee26a4, type: 3}
+  initialPoolSize: 50
+--- !u!4 &891186948
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 891186946}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &991144152
 GameObject:
   m_ObjectHideFlags: 0
@@ -1288,8 +1334,9 @@ GameObject:
   - component: {fileID: 1426228256}
   - component: {fileID: 1426228255}
   - component: {fileID: 1426228257}
+  - component: {fileID: 1426228258}
   m_Layer: 6
-  m_Name: Square (1)
+  m_Name: Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1395,7 +1442,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -1411,6 +1458,27 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &1426228258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426228254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf499256694eae049a31cc635289169e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 10
+  destroyOnHit: 1
+  continuousDamage: 0
+  tickInterval: 0.5
+  applyKnockback: 0
+  knockbackForce: 5
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &1490849683
 GameObject:
   m_ObjectHideFlags: 0
@@ -1753,8 +1821,8 @@ GameObject:
   - component: {fileID: 2113365912}
   - component: {fileID: 2113365913}
   - component: {fileID: 2113365914}
-  - component: {fileID: 2113365908}
   - component: {fileID: 2113365907}
+  - component: {fileID: 2113365908}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1985,7 +2053,7 @@ GameObject:
   - component: {fileID: 2119932265}
   - component: {fileID: 2119932267}
   m_Layer: 6
-  m_Name: Square
+  m_Name: Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2120,3 +2188,4 @@ SceneRoots:
   - {fileID: 700419322}
   - {fileID: 315896274}
   - {fileID: 465384614}
+  - {fileID: 891186948}

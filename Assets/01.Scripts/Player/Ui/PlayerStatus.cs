@@ -29,6 +29,7 @@ public class PlayerStatus : MonoBehaviour
         OnAmmoChanged?.Invoke(CurrentAmmo, MaxAmmo);
     }
 
+
     /// <summary>
     /// 체력 감소 처리 메서드 예시
     /// - 데미지를 받아 현재 체력에서 감소
@@ -36,20 +37,25 @@ public class PlayerStatus : MonoBehaviour
     /// - 변경 후 이벤트 호출하여 UI 갱신 트리거
     /// </summary>
     /// <param name="damage">입력받은 데미지 값</param>
-    public void TakeDamage(int damage)
+    public void TakeDamage(int amount)
     {
-        CurrentHealth = Mathf.Clamp(CurrentHealth - damage, 0, MaxHealth);
-        Debug.Log($"[PlayerStatus] TakeDamage → {CurrentHealth}/{MaxHealth}");
-
+        CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0, MaxHealth);
+        Debug.Log($"[Player] 피해 {amount} → 현재 체력: {CurrentHealth}");
         OnHealthChanged?.Invoke(CurrentHealth, MaxHealth);
+
+        if (CurrentHealth <= 0)
+        {
+            Debug.Log("[Player] 사망 처리 로직 실행");
+            // TODO: 사망 애니메이션, FSM, 리스폰 등
+        }
     }
 
-    /// <summary>
-    /// 탄약 1발 사용 처리
-    /// - 탄약이 0 이하일 경우 사용 불가
-    /// - 사용 후 이벤트 호출하여 UI 갱신
-    /// </summary>
-    public void UseAmmo()
+/// <summary>
+/// 탄약 1발 사용 처리
+/// - 탄약이 0 이하일 경우 사용 불가
+/// - 사용 후 이벤트 호출하여 UI 갱신
+/// </summary>
+public void UseAmmo()
     {
         if (CurrentAmmo <= 0) return;
 
