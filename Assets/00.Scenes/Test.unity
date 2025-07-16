@@ -364,6 +364,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ammoText: {fileID: 150649410}
+  animSpeed: 0.05
 --- !u!224 &242370755
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1838,14 +1839,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hpText: {fileID: 991144153}
-  glitchText: {fileID: 2043794484}
-  baseShakeIntensity: 2
-  flashDuration: 5
-  glitchDurationDamage: 0.05
-  glitchDurationHeal: 0.05
-  minLowHpGlitchChance: 0.0005
-  maxLowHpGlitchChance: 0.0001
+  canvasGroup: {fileID: 0}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  hurtColor: {r: 1, g: 0, b: 0, a: 1}
+  healColor: {r: 0, g: 1, b: 0, a: 1}
+  deadColor: {r: 0, g: 0, b: 0, a: 1}
+  shakeDurationBase: 0.4
+  shakeIntensityBase: 2
   glitchChars: '#@!%&$*'
+  glitchDuration: 0.4
+  glitchInterval: 0.04
+  fadeOutSpeed: 0.8
+  healDuration: 1.2
 --- !u!225 &1670773205
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1963,7 +1968,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2043794481
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2301,9 +2306,11 @@ MonoBehaviour:
   detachDelay: 0.2
   maxAttachTime: 3
   swingEnergyPerSecond: 0.1
-  dashEnergyCost: 1
+  swingRechargePerSecond: 0.05
   swingEnergyTickInterval: 0.05
   initialSwingBoost: 5
+  dashEnergyCost: 1
+  dashRechargePerSecond: 0.1
 --- !u!114 &2113365913
 MonoBehaviour:
   m_ObjectHideFlags: 0

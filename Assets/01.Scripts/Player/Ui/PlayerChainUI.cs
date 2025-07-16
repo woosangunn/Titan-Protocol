@@ -1,45 +1,60 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class PlayerChainUI : MonoBehaviour
 {
-    [Header("UI 참조")]
-    public Image chainBarFill;     // 게이지 바 이미지 (Filled 타입)
-    public TMP_Text chainText;     // 남은 시간 표시용 텍스트
+    [Header("UI")]
+    public TMP_Text chainText;    // "CHAIN: 25 / 30"
+    public float animSpeed = 0.05f;
 
     private PlayerGrappleHandler grapple;
+    private Coroutine animate;
+    private int displayGauge;
+    private int maxGauge;
 
     void Awake()
     {
         grapple = Object.FindFirstObjectByType<PlayerGrappleHandler>();
-
-        if (grapple == null)
-        {
-            Debug.LogError("[PlayerChainUI] PlayerGrappleHandler를 찾지 못했습니다.");
-            enabled = false;
-        }
+        if (grapple == null) { Debug.LogError("[ChainUI] GrappleHandler 없음"); enabled = false; return; }
     }
 
-    void Update()
+    void OnEnable()
     {
-        if (grapple == null) return;
+        grapple.OnGaugeChanged += UpdateGauge;
+        displayGauge = grapple.CurrentGauge;
+        maxGauge = grapple.maxGauge;
+        SetText(displayGauge, maxGauge);
+    }
 
-        float remain = grapple.RemainingChainTime();
-        float max = grapple.maxAttachTime;
-        float ratio = max > 0f ? remain / max : 0f;
+    void OnDisable()
+    {
+        if (grapple != null) grapple.OnGaugeChanged -= UpdateGauge;
+    }
 
-        // 게이지 채우기 (체인 연결 여부와 상관없이 항상 표시)
-        if (chainBarFill != null)
-            chainBarFill.fillAmount = ratio;
+    /* 이벤트 콜백 */
+    private void UpdateGauge(int cur, int max)
+    {
+        maxGauge = max;
+        if (animate != null) StopCoroutine(animate);
+        animate = StartCoroutine(AnimateGauge(cur));
+    }
 
-        // 텍스트도 항상 표시하되 남은 시간이 0이면 "Chain: Empty" 등으로 표시
-        if (chainText != null)
+    IEnumerator AnimateGauge(int target)
+    {
+        while (displayGauge != target)
         {
-            if (remain <= 0f)
-                chainText.text = "Chain: Empty";
-            else
-                chainText.text = $"Chain: {remain:F1}s / {max:F1}s";
+            displayGauge += (displayGauge < target) ? 1 : -1;
+            SetText(displayGauge, maxGauge);
+            yield return new WaitForSeconds(animSpeed);
         }
+        animate = null;
+    }
+
+    private void SetText(int cur, int max)
+    {
+        chainText.text = $"CHAIN: {cur} / {max}";
+        float ratio = (max > 0) ? (float)cur / max : 0f;
+        chainText.color = Color.Lerp(Color.black, Color.white, ratio); // 흰 → 검
     }
 }

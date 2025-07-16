@@ -2,35 +2,43 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 
+/// <summary>
+/// 플레이어 탄약 UI 표시 컴포넌트
+/// - 탄약 변경 시 텍스트 수치 변경 애니메이션 적용
+/// - 탄약 수에 따라 글자 색상이 흰색 → 검정색으로 점점 어두워짐
+/// </summary>
 public class PlayerAmmoUI : MonoBehaviour
 {
-    [Header("UI 참조")]
-    public TMP_Text ammoText;
+    [Header("UI")]
+    public TMP_Text ammoText;         // "AMMO: 10 / 30" 형식 텍스트
 
     private PlayerStatus status;
-    private Coroutine animateCoroutine;
-    private int displayAmmo = 0;  // UI에 보여지는 탄약 수
-    private int maxAmmo = 0;
+    private Coroutine animate;
+    private int displayAmmo;          // 현재 표시되는 탄약 수
+    private int maxAmmo;
 
-    private float reloadAnimationSpeed = 0.05f; // 1발당 애니메이션 간격 (변경 가능)
+    [Header("설정")]
+    public float animSpeed = 0.05f;   // 숫자 하나 변화 시 딜레이 (작을수록 빠름)
 
     void Awake()
     {
         status = Object.FindFirstObjectByType<PlayerStatus>();
-
         if (status == null)
         {
             Debug.LogError("[PlayerAmmoUI] PlayerStatus를 찾지 못했습니다.");
             enabled = false;
+            return;
         }
     }
 
     void OnEnable()
     {
-        if (status == null) return;
-
         status.OnAmmoChanged += UpdateAmmoUI;
-        UpdateAmmoUI(status.CurrentAmmo, status.MaxAmmo);
+
+        // 초기 값 즉시 반영 (시작 시 30 / 30처럼)
+        displayAmmo = status.CurrentAmmo;
+        maxAmmo = status.MaxAmmo;
+        SetText(displayAmmo, maxAmmo);
     }
 
     void OnDisable()
@@ -40,66 +48,48 @@ public class PlayerAmmoUI : MonoBehaviour
     }
 
     /// <summary>
-    /// PlayerStatus에서 호출됨
+    /// PlayerStatus의 OnAmmoChanged 이벤트로부터 호출됨
     /// </summary>
     public void UpdateAmmoUI(int current, int max)
     {
         maxAmmo = max;
 
-        // 목표 탄약이 이미 표시 중인 수치와 같으면 애니메이션 중복 방지
-        if (animateCoroutine != null && current == displayAmmo)
+        if (animate != null)
+            StopCoroutine(animate);
+
+        if (current == displayAmmo)
+        {
+            // 숫자 변동 없음
+            SetText(displayAmmo, maxAmmo);
             return;
-
-        // 기존 애니메이션이 있다면 중지
-        if (animateCoroutine != null)
-            StopCoroutine(animateCoroutine);
-
-        // 1발씩 애니메이션으로 숫자 변화
-        animateCoroutine = StartCoroutine(AnimateAmmo(displayAmmo, current, max));
-    }
-
-    private IEnumerator AnimateAmmo(int from, int to, int max)
-    {
-        int current = from;
-
-        while (current != to)
-        {
-            if (to > current)
-                current++;
-            else
-                current--;  // 탄약 감소 시 애니메이션도 부드럽게 적용 가능
-
-            displayAmmo = current;
-            SetAmmoDisplay(displayAmmo, max);
-
-            yield return new WaitForSeconds(reloadAnimationSpeed);
         }
 
-        animateCoroutine = null;
-    }
-
-    private void SetAmmoDisplay(int current, int max)
-    {
-        if (ammoText != null)
-        {
-            ammoText.text = $"Ammo {current} / {max}";
-            ammoText.color = GetAmmoColor(current, max);
-        }
-    }
-
-    private Color GetAmmoColor(int current, int max)
-    {
-        if (max <= 0) return Color.black;
-
-        float ratio = Mathf.Clamp01((float)current / max);
-        return Color.Lerp(Color.black, Color.white, ratio);
+        animate = StartCoroutine(AnimateAmmoChange(current));
     }
 
     /// <summary>
-    /// 외부에서 장전 속도를 조절할 수 있는 함수 (옵션)
+    /// 탄약 수치가 변경될 때 숫자가 하나씩 빠르게 증감하도록 애니메이션 처리
     /// </summary>
-    public void SetReloadAnimationSpeed(float secondsPerAmmo)
+    IEnumerator AnimateAmmoChange(int target)
     {
-        reloadAnimationSpeed = secondsPerAmmo;
+        while (displayAmmo != target)
+        {
+            displayAmmo += (displayAmmo < target) ? 1 : -1;
+            SetText(displayAmmo, maxAmmo);
+            yield return new WaitForSeconds(animSpeed);
+        }
+
+        animate = null;
+    }
+
+    /// <summary>
+    /// 텍스트 표시 및 색상 보간 처리
+    /// </summary>
+    private void SetText(int current, int max)
+    {
+        ammoText.text = $"AMMO: {current} / {max}";
+
+        float ratio = (max > 0) ? (float)current / max : 0f;
+        ammoText.color = Color.Lerp(Color.black, Color.white, ratio);
     }
 }

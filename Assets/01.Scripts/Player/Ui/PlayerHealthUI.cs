@@ -2,157 +2,158 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 
+/// <summary>
+/// 플레이어 체력 UI 처리 컴포넌트
+/// - 글리치 연출, 색상 변화, 흔들림, 페이드아웃, 회복 애니메이션 포함
+/// </summary>
 [RequireComponent(typeof(CanvasGroup))]
 public class PlayerHealthUI : MonoBehaviour
 {
     [Header("UI")]
     public TMP_Text hpText;
-    public TMP_Text glitchText;
+    private CanvasGroup canvasGroup;
+    private RectTransform rt;
 
-    [Header("효과 설정")]
-    public float baseShakeIntensity = 2f;
-    public float flashDuration = 5f;
+    [Header("색상")]
+    public Color normalColor = Color.white;    // 100일 때
+    public Color midColor = Color.red;      // 50일 때
+    public Color deadColor = Color.black;    // 0일 때
+    public Color healColor = Color.green;    // 회복 중
 
-    [Header("글리치 설정")]
-    public float glitchDurationDamage = 0.05f;
-    public float glitchDurationHeal = 0.05f;
-    public float minLowHpGlitchChance = 0.0005f;
-    public float maxLowHpGlitchChance = 0.0001f;
+    [Header("연출")]
+    public float shakeDurationBase = 0.4f;
+    public float shakeIntensityBase = 2f;
     public string glitchChars = "#@!%&$*";
+    public float glitchDuration = 0.4f;
+    public float glitchInterval = 0.04f;
+    public float fadeOutSpeed = 0.8f;
+    public float healDuration = 1.2f;
 
-    private int currentHP;
+    /* 내부 상태 */
+    private int displayHP;
+    private int targetHP;
     private int maxHP;
 
-    private float flashTimer = 0f;
-    private Color baseColor = Color.white;
-    private Color flashColor = Color.white;
-
-    private RectTransform rectTransform;
-    private RectTransform glitchRect;
+    private float shakeTimer = 0f;
+    private Coroutine glitchRoutine;
     private Vector2 originalPos;
-    private Coroutine glitchCoroutine;
 
     void Awake()
     {
-        rectTransform = hpText.GetComponent<RectTransform>();
-        glitchRect = glitchText.GetComponent<RectTransform>();
-        originalPos = rectTransform.anchoredPosition;
+        canvasGroup = GetComponent<CanvasGroup>();
+        rt = hpText.GetComponent<RectTransform>();
+        originalPos = rt.anchoredPosition;
 
-        glitchText.gameObject.SetActive(false);
-        hpText.text = "";
+        // 시작 시 HP 100 기준으로 초기화
+        maxHP = 100;
+        targetHP = displayHP = maxHP;
+        hpText.text = $"HP: {displayHP}";
+        hpText.color = normalColor;
+        canvasGroup.alpha = 1f;
     }
 
     void Update()
     {
-        UpdateShake();
-        UpdateFlash();
-        TryGlitchWhenLowHP();
+        // 흔들림 처리
+        if (shakeTimer > 0f)
+        {
+            shakeTimer -= Time.deltaTime;
+            float decay = shakeTimer / (shakeDurationBase * (1f - (float)targetHP / maxHP));
+            rt.anchoredPosition = originalPos + Random.insideUnitCircle * shakeIntensityBase * decay;
+        }
+        else
+        {
+            rt.anchoredPosition = originalPos;
+        }
+
+        // 회복 숫자 애니메이션
+        if (displayHP < targetHP)
+        {
+            int step = Mathf.Clamp(
+                Mathf.CeilToInt((targetHP - displayHP) * Time.deltaTime / healDuration),
+                1, targetHP - displayHP);
+
+            displayHP += step;
+            hpText.text = $"HP: {displayHP}";
+
+            if (displayHP == targetHP)
+                hpText.color = normalColor;
+        }
+
+        // 체력 0이면 서서히 사라짐
+        if (targetHP <= 0)
+            canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, 0f, Time.deltaTime * fadeOutSpeed);
+        else
+            canvasGroup.alpha = 1f;
     }
 
-    // 외부에서 체력 업데이트할 때 호출됨
+    /// <summary>
+    /// PlayerStatus에서 체력 변경 시 호출
+    /// </summary>
     public void UpdateUI(int current, int max)
     {
-        currentHP = current;
         maxHP = max;
+        targetHP = current;
 
-        SetText();
-        SetColor();
-        StartFlashEffect();
+        float hpRatio = (maxHP > 0) ? (float)current / maxHP : 0f;
 
-        // 글리치 효과 (기존 코루틴 멈추고 새로 실행)
-        if (glitchCoroutine != null) StopCoroutine(glitchCoroutine);
-        float duration = current < currentHP ? glitchDurationDamage : glitchDurationHeal;
-        if (current != currentHP)
-            glitchCoroutine = StartCoroutine(GlitchOverlayEffect(duration));
-    }
-
-    private void SetText()
-    {
-        hpText.text = $"HP: {currentHP} / {maxHP}";
-    }
-
-    private void SetColor()
-    {
-        baseColor = currentHP <= 0 ? Color.black : Color.white;
-    }
-
-    private void StartFlashEffect()
-    {
-        flashTimer = flashDuration * (1f - Mathf.Clamp01((float)currentHP / maxHP));
-        flashColor = currentHP < maxHP ? Color.red : Color.green;
-    }
-
-    private void UpdateFlash()
-    {
-        if (flashTimer > 0f)
+        // 회복 중
+        if (current > displayHP)
         {
-            flashTimer -= Time.deltaTime;
-            float t = flashTimer / flashDuration;
-            hpText.color = Color.Lerp(baseColor, flashColor, t);
+            hpText.color = healColor;
+        }
+
+        // 피해 시 글리치 + 흔들림
+        if (current < displayHP)
+        {
+            shakeTimer = shakeDurationBase * (1f - hpRatio);
+
+            if (glitchRoutine != null)
+                StopCoroutine(glitchRoutine);
+            glitchRoutine = StartCoroutine(GlitchEffectRoutine(current));
+        }
+
+        // 색상: 체력 비율 따라 선형 보간
+        if (current <= 0)
+        {
+            hpText.color = deadColor;
+        }
+        else if (current <= 50)
+        {
+            hpText.color = Color.Lerp(midColor, deadColor, 1f - hpRatio * 2f);
         }
         else
         {
-            hpText.color = baseColor;
+            hpText.color = Color.Lerp(normalColor, midColor, 1f - (hpRatio - 0.5f) * 2f);
         }
+
+        // 텍스트 즉시 반영 (코루틴 중이면 무시됨)
+        if (glitchRoutine == null)
+            hpText.text = $"HP: {displayHP}";
     }
 
-    private void UpdateShake()
+    /// <summary>
+    /// 피격 시 글리치 텍스트 표시 후 실제 수치로 복원
+    /// </summary>
+    IEnumerator GlitchEffectRoutine(int finalValue)
     {
-        if (currentHP <= 80)
-        {
-            float hpRatio = Mathf.Clamp01((float)currentHP / 80f);
-            float intensity = baseShakeIntensity * (1f - hpRatio);
-            rectTransform.anchoredPosition = originalPos + Random.insideUnitCircle * intensity;
-        }
-        else
-        {
-            rectTransform.anchoredPosition = originalPos;
-        }
-    }
-
-    private void TryGlitchWhenLowHP()
-    {
-        if (currentHP <= 50 && glitchCoroutine == null)
-        {
-            float hpRatio = Mathf.Clamp01((float)currentHP / 50f);
-            float chance = Mathf.Lerp(maxLowHpGlitchChance, minLowHpGlitchChance, hpRatio);
-            if (Random.value < chance)
-            {
-                glitchCoroutine = StartCoroutine(GlitchOverlayEffect(0.2f));
-            }
-        }
-    }
-
-    private IEnumerator GlitchOverlayEffect(float duration)
-    {
-        hpText.gameObject.SetActive(false);
-        glitchText.gameObject.SetActive(true);
-
-        Vector2 glitchOriginalPos = glitchRect.anchoredPosition;
-        float timer = duration;
+        float timer = glitchDuration;
+        string finalText = finalValue.ToString();
+        char[] buffer = finalText.ToCharArray();
 
         while (timer > 0f)
         {
-            timer -= Time.deltaTime;
+            timer -= glitchInterval;
 
-            string glitch = "";
-            int length = Mathf.Max(2, currentHP.ToString().Length);
-            for (int i = 0; i < length; i++)
-                glitch += glitchChars[Random.Range(0, glitchChars.Length)];
+            for (int i = 0; i < buffer.Length; i++)
+                buffer[i] = glitchChars[Random.Range(0, glitchChars.Length)];
 
-            glitchText.text = glitch;
-            glitchText.alpha = Random.Range(0.6f, 1f);
-
-            float hpRatio = Mathf.Clamp01((float)currentHP / 80f);
-            float intensity = baseShakeIntensity * 1.5f * (1f - hpRatio);
-            glitchRect.anchoredPosition = glitchOriginalPos + Random.insideUnitCircle * intensity;
-
-            yield return new WaitForSeconds(0.05f);
+            hpText.text = "HP: " + new string(buffer);
+            yield return new WaitForSeconds(glitchInterval);
         }
 
-        glitchText.gameObject.SetActive(false);
-        glitchRect.anchoredPosition = glitchOriginalPos;
-        hpText.gameObject.SetActive(true);
-        glitchCoroutine = null;
+        displayHP = finalValue;
+        hpText.text = $"HP: {displayHP}";
+        glitchRoutine = null;
     }
 }
