@@ -34,6 +34,10 @@ public class DamageSource : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         TryDealDamage(other);
+
+        // 지속 피해용 타이머 초기화
+        if (continuousDamage)
+            nextTickTime = Time.time + tickInterval;
     }
 
     void OnTriggerStay2D(Collider2D other)
@@ -60,15 +64,38 @@ public class DamageSource : MonoBehaviour
 
         // 3) 데미지 적용
         dmgTarget.TakeDamage(damage);
+        Debug.Log($"[DamageSource] {other.name}에게 {damage} 데미지 적용");
 
         // 4) 넉백 적용(선택)
         if (applyKnockback)
         {
-            Rigidbody2D rb = other.attachedRigidbody;
-            if (rb != null)
+            Vector2 dir = (other.transform.position - transform.position);
+            if (dir.sqrMagnitude < 0.01f)
+                dir = Vector2.up; // 최소 보정
+
+            dir = dir.normalized;
+            Vector2 knockback = dir * knockbackForce;
+
+            // PlayerMovement 쪽 넉백 처리 우선
+            var movement = other.GetComponent<PlayerMovement>();
+            if (movement != null)
             {
-                Vector2 dir = (other.transform.position - transform.position).normalized;
-                rb.AddForce(dir * knockbackForce, ForceMode2D.Impulse);
+                movement.ApplyKnockback(knockback);
+                Debug.Log($"[DamageSource] {other.name}에 ApplyKnockback 호출: 방향 {dir}, 힘 {knockbackForce}");
+            }
+            else
+            {
+                // 없으면 Rigidbody2D 직접 처리
+                Rigidbody2D rb = other.attachedRigidbody;
+                if (rb != null)
+                {
+                    rb.AddForce(knockback, ForceMode2D.Impulse);
+                    Debug.Log($"[DamageSource] {other.name}에 Rigidbody2D로 넉백 적용");
+                }
+                else
+                {
+                    Debug.LogWarning($"[DamageSource] {other.name}에 Rigidbody2D 없음 (넉백 불가)");
+                }
             }
         }
 

@@ -1,52 +1,44 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerGrappleHandler : MonoBehaviour
 {
-    [Header("그래플링 세팅")]
-    public float grappleSpeed = 20f;             // 사슬 대시 시 이동 속도
-    public float swingForce = 10f;               // 스윙 중 지속적으로 가해지는 힘
-    public float detachDelay = 0.2f;             // (미사용) 대시 후 분리 지연 시간
+    [Header("Chain Gauge")]
+    public int dashCost = 10;
+    public int swingCost = 1;
+    public float swingTickInterval = 0.2f;   // ← 빠른 소모
+    public float rechargeInterval = 0.06f;
 
-    [Header("사슬 시간 설정")]
-    public float maxAttachTime = 3f;             // 체인 최대 지속 시간
+    public int CurrentGauge { get; private set; } = 30;
+    public int maxGauge = 30;
+    public event Action<int, int> OnGaugeChanged;
 
-    [Header("스윙 게이지 설정")]
-    public float swingEnergyPerSecond = 0.1f;    // 스윙 시 초당 소모량
-    public float swingRechargePerSecond = 0.05f; // 스윙 시 아닐 때 초당 회복량
-    public float swingEnergyTickInterval = 0.001f;    // 소모 적용 틱 간격
-    public float initialSwingBoost = 5f;             // 스윙 시작 시 단발 초기 힘
-
-    [Header("대시 게이지 설정")]
-    public float dashEnergyCost = 1.0f;          // 대시 시 1회 소모량
-    public float dashRechargePerSecond = 0.1f;   // 대시 게이지 초당 회복량
-
-    private float swingEnergyPerTick;
-    private float swingRechargePerTick;
-    private float swingEnergyTickTimer = 0f;
-
-    private float attachTimer = 0f;               // 스윙 누적 소모
-    private float dashUsed = 0f;                   // 대시 누적 소모
+    [Header("Grapple Movement")]
+    public float grappleSpeed = 20f;
+    public float swingForce = 10f;
+    public float detachDistance = 0.3f;
 
     private Rigidbody2D rb;
     private DistanceJoint2D joint;
     private LineRenderer line;
 
-    public bool IsAttached { get; private set; }
+    public bool IsAttached { get; private set; } = false;
     private Vector2 grapplePoint;
 
     private PlayerInput input;
-    private GhostSpawner ghostSpawner;
+    private Coroutine dashRoutine;
+    private Coroutine rechargeRoutine;
 
-    private float swingDirection;
-    private bool isSwinging;
+    private bool isSwinging = false;
+    private float swingDir = 0f;
+    private float swingTickTimer = 0f;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         input = GetComponent<PlayerInput>();
-        ghostSpawner = GetComponent<GhostSpawner>();
 
         joint = gameObject.AddComponent<DistanceJoint2D>();
         joint.enabled = false;
@@ -56,85 +48,36 @@ public class PlayerGrappleHandler : MonoBehaviour
         line = gameObject.AddComponent<LineRenderer>();
         line.positionCount = 2;
         line.material = new Material(Shader.Find("Sprites/Default"));
-        line.startWidth = 0.05f;
-        line.endWidth = 0.05f;
+        line.startWidth = line.endWidth = 0.05f;
         line.enabled = false;
 
-        swingEnergyPerTick = swingEnergyPerSecond * swingEnergyTickInterval;
-        swingRechargePerTick = swingRechargePerSecond * swingEnergyTickInterval;
+        CurrentGauge = maxGauge;
+        OnGaugeChanged?.Invoke(CurrentGauge, maxGauge); // 시작 시 즉시 30 전달
     }
 
     void Update()
     {
-        if (IsAttached)
+        if (!IsAttached) return;
+
+        if (isSwinging)
         {
-            if (isSwinging)
+            swingTickTimer += Time.deltaTime;
+            if (swingTickTimer >= swingTickInterval)
             {
-                // 스윙 중 체인 소모 처리 (틱 단위)
-                swingEnergyTickTimer += Time.deltaTime;
-
-                while (swingEnergyTickTimer >= swingEnergyTickInterval)
+                swingTickTimer = 0f;
+                if (!ConsumeGauge(swingCost))
                 {
-                    swingEnergyTickTimer -= swingEnergyTickInterval;
-                    attachTimer += swingEnergyPerTick;
-
-                    if (attachTimer + dashUsed >= maxAttachTime)
-                    {
-                        DetachGrapple();
-                        return;
-                    }
+                    DetachGrapple();
+                    return;
                 }
             }
-            else
-            {
-                // 스윙 중이 아닐 때는 스윙 게이지 회복
-                if (attachTimer > 0f)
-                {
-                    swingEnergyTickTimer += Time.deltaTime;
-
-                    while (swingEnergyTickTimer >= swingEnergyTickInterval)
-                    {
-                        swingEnergyTickTimer -= swingEnergyTickInterval;
-                        attachTimer -= swingRechargePerTick;
-                        attachTimer = Mathf.Max(attachTimer, 0f);
-                    }
-                }
-            }
-
-            // 대시 입력 감지 및 소모 처리
-            if (input.DashPressed)
-                TryConsumeDashEnergy();
-
-            // 대시 게이지도 회복 처리
-            if (dashUsed > 0f)
-            {
-                dashUsed -= dashRechargePerSecond * Time.deltaTime;
-                dashUsed = Mathf.Max(dashUsed, 0f);
-            }
-
-            // 라인 렌더러 위치 갱신
-            line.SetPosition(0, transform.position);
-            line.SetPosition(1, grapplePoint);
-
-            // 오른쪽 클릭 시 사슬 분리
-            if (input.RightClick)
-                DetachGrapple();
         }
-        else
-        {
-            // 사슬이 떨어졌을 때 스윙 & 대시 게이지 회복
-            if (attachTimer > 0f)
-            {
-                attachTimer -= swingRechargePerSecond * Time.deltaTime;
-                attachTimer = Mathf.Max(attachTimer, 0f);
-            }
 
-            if (dashUsed > 0f)
-            {
-                dashUsed -= dashRechargePerSecond * Time.deltaTime;
-                dashUsed = Mathf.Max(dashUsed, 0f);
-            }
-        }
+        if (input.RightClick)
+            DetachGrapple();
+
+        line.SetPosition(0, transform.position);
+        line.SetPosition(1, grapplePoint);
     }
 
     void FixedUpdate()
@@ -142,7 +85,7 @@ public class PlayerGrappleHandler : MonoBehaviour
         if (isSwinging && IsAttached)
         {
             Vector2 toAnchor = grapplePoint - (Vector2)transform.position;
-            Vector2 tangent = Vector2.Perpendicular(toAnchor.normalized) * -Mathf.Sign(swingDirection);
+            Vector2 tangent = Vector2.Perpendicular(toAnchor.normalized) * -Mathf.Sign(swingDir);
             rb.AddForce(tangent * swingForce, ForceMode2D.Force);
         }
     }
@@ -150,6 +93,13 @@ public class PlayerGrappleHandler : MonoBehaviour
     public void AttachGrapple(Vector2 point)
     {
         if (IsAttached) return;
+        if (CurrentGauge <= 0) return;
+
+        if (rechargeRoutine != null)
+        {
+            StopCoroutine(rechargeRoutine);
+            rechargeRoutine = null;
+        }
 
         IsAttached = true;
         grapplePoint = point;
@@ -159,52 +109,61 @@ public class PlayerGrappleHandler : MonoBehaviour
         joint.distance = Vector2.Distance(transform.position, grapplePoint);
         joint.enableCollision = true;
 
-        rb.linearVelocity = Vector2.zero;
-
         line.enabled = true;
         line.SetPosition(0, transform.position);
         line.SetPosition(1, grapplePoint);
 
-        ghostSpawner?.StartGhostTrail();
-
-        attachTimer = 0f;
-        dashUsed = 0f;
-        swingEnergyTickTimer = 0f;
-        isSwinging = false;
+        rb.linearVelocity = Vector2.zero;
+        swingTickTimer = 0f;
     }
 
     public void DoSwing(float direction)
     {
         if (!IsAttached) return;
 
-        swingDirection = direction;
+        swingDir = direction;
         isSwinging = true;
 
-        // 초기 스윙 부스트 (단발 Impulse)
         Vector2 toAnchor = grapplePoint - (Vector2)transform.position;
-        Vector2 tangent = Vector2.Perpendicular(toAnchor.normalized) * -Mathf.Sign(swingDirection);
-        rb.AddForce(tangent * initialSwingBoost, ForceMode2D.Impulse);
-
-        ghostSpawner?.StartGhostTrail();
+        Vector2 tangent = Vector2.Perpendicular(toAnchor.normalized) * -Mathf.Sign(swingDir);
+        rb.AddForce(tangent * swingForce, ForceMode2D.Impulse);
     }
 
     public void DoGrappleDash()
     {
         if (!IsAttached) return;
 
-        StopAllCoroutines();
-        StartCoroutine(GrappleDashCoroutine());
+        if (!ConsumeGauge(dashCost))
+        {
+            DetachGrapple();
+            return;
+        }
 
-        TryConsumeDashEnergy();
+        if (dashRoutine != null) StopCoroutine(dashRoutine);
+        dashRoutine = StartCoroutine(GrappleDashCoroutine());
     }
 
-    private IEnumerator GrappleDashCoroutine()
+    public void DetachGrapple()
     {
-        while (true)
+        if (!IsAttached) return;
+
+        IsAttached = false;
+        isSwinging = false;
+        swingDir = 0f;
+
+        joint.enabled = false;
+        line.enabled = false;
+
+        if (rechargeRoutine != null) StopCoroutine(rechargeRoutine);
+        rechargeRoutine = StartCoroutine(RechargeCoroutine());
+    }
+
+    IEnumerator GrappleDashCoroutine()
+    {
+        while (IsAttached)
         {
             Vector2 toTarget = grapplePoint - (Vector2)transform.position;
-
-            if (toTarget.magnitude < 0.3f)
+            if (toTarget.magnitude < detachDistance)
             {
                 rb.linearVelocity = Vector2.zero;
                 DetachGrapple();
@@ -216,50 +175,22 @@ public class PlayerGrappleHandler : MonoBehaviour
         }
     }
 
-    private void TryConsumeDashEnergy()
+    IEnumerator RechargeCoroutine()
     {
-        if (dashUsed + dashEnergyCost > maxAttachTime)
+        while (CurrentGauge < maxGauge)
         {
-            // 대시 소모하면 총 체인 제한 초과 => 분리
-            DetachGrapple();
-            return;
+            yield return new WaitForSeconds(rechargeInterval);
+            CurrentGauge++;
+            OnGaugeChanged?.Invoke(CurrentGauge, maxGauge);
         }
-
-        dashUsed += dashEnergyCost;
+        rechargeRoutine = null;
     }
 
-    public void DetachGrapple()
+    private bool ConsumeGauge(int amount)
     {
-        if (!IsAttached) return;
-
-        IsAttached = false;
-        isSwinging = false;
-        swingDirection = 0f;
-
-        joint.enabled = false;
-        line.enabled = false;
-
-        ghostSpawner?.StopGhostTrail();
-
-        attachTimer = 0f;
-        dashUsed = 0f;
-        swingEnergyTickTimer = 0f;
-    }
-
-    // UI용 남은 게이지 (스윙 + 대시 합산)
-    public float RemainingChainTime()
-    {
-        return Mathf.Clamp(maxAttachTime - (attachTimer + dashUsed), 0f, maxAttachTime);
-    }
-
-    // UI용 개별 게이지 상태 반환
-    public float SwingChainRatio()
-    {
-        return Mathf.Clamp01(1f - attachTimer / maxAttachTime);
-    }
-
-    public float DashChainRatio()
-    {
-        return Mathf.Clamp01(1f - dashUsed / maxAttachTime);
+        if (CurrentGauge < amount) return false;
+        CurrentGauge -= amount;
+        OnGaugeChanged?.Invoke(CurrentGauge, maxGauge);
+        return true;
     }
 }

@@ -1083,8 +1083,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b00e1bceb4d052848b49263acf879c03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chainBarFill: {fileID: 0}
   chainText: {fileID: 1550467011}
+  animSpeed: 0.05
 --- !u!1 &991144152
 GameObject:
   m_ObjectHideFlags: 0
@@ -1420,6 +1420,7 @@ GameObject:
   - component: {fileID: 1426228255}
   - component: {fileID: 1426228258}
   - component: {fileID: 1426228257}
+  - component: {fileID: 1426228259}
   m_Layer: 6
   m_Name: Enemy
   m_TagString: Untagged
@@ -1559,11 +1560,38 @@ MonoBehaviour:
   destroyOnHit: 0
   continuousDamage: 0
   tickInterval: 0.5
-  applyKnockback: 0
-  knockbackForce: 5
+  applyKnockback: 1
+  knockbackForce: 10
   targetLayers:
     serializedVersion: 2
     m_Bits: 128
+--- !u!50 &1426228259
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426228254}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &1490849683
 GameObject:
   m_ObjectHideFlags: 0
@@ -1839,11 +1867,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hpText: {fileID: 991144153}
-  canvasGroup: {fileID: 0}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
-  hurtColor: {r: 1, g: 0, b: 0, a: 1}
-  healColor: {r: 0, g: 1, b: 0, a: 1}
+  midColor: {r: 1, g: 0, b: 0, a: 1}
   deadColor: {r: 0, g: 0, b: 0, a: 1}
+  healColor: {r: 0, g: 1, b: 0, a: 1}
   shakeDurationBase: 0.4
   shakeIntensityBase: 2
   glitchChars: '#@!%&$*'
@@ -2158,6 +2185,7 @@ MonoBehaviour:
   moveSpeed: 5
   dashSpeed: 20
   dashDuration: 0.2
+  knockbackDuration: 0.2
 --- !u!114 &2113365906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2301,16 +2329,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b5d3e55b84e2ef44905ffb44b453ecf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  dashCost: 10
+  swingCost: 1
+  swingTickInterval: 1
+  rechargeInterval: 0.06
+  maxGauge: 30
   grappleSpeed: 25
   swingForce: 20
-  detachDelay: 0.2
-  maxAttachTime: 3
-  swingEnergyPerSecond: 0.1
-  swingRechargePerSecond: 0.05
-  swingEnergyTickInterval: 0.05
-  initialSwingBoost: 5
-  dashEnergyCost: 1
-  dashRechargePerSecond: 0.1
+  detachDistance: 0.3
 --- !u!114 &2113365913
 MonoBehaviour:
   m_ObjectHideFlags: 0
