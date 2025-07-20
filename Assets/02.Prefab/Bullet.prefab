@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2059691323271172878}
   - component: {fileID: 4102814256498577537}
   - component: {fileID: 6398243926190051782}
+  - component: {fileID: -2128422722439948758}
   - component: {fileID: 6921831400824643131}
   - component: {fileID: -2508979381346804119}
   m_Layer: 0
@@ -103,6 +104,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lifeTime: 3
+--- !u!114 &-2128422722439948758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3337750690162418472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf499256694eae049a31cc635289169e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 10
+  destroyOnHit: 1
+  continuousDamage: 0
+  tickInterval: 0.5
+  applyKnockback: 0
+  knockbackForce: 5
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!58 &6921831400824643131
 CircleCollider2D:
   m_ObjectHideFlags: 0
