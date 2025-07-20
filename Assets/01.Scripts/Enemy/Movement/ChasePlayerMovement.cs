@@ -9,6 +9,6 @@ public class ChasePlayerMovement : EnemyMovementBase
         if (player == null) return;
 
         Vector2 direction = (player.transform.position - controller.transform.position).normalized;
-        controller.transform.position += (Vector3)(direction * controller.stats.MoveSpeed * Time.deltaTime);
+        controller.transform.position += (Vector3)(direction * controller.Stats.MoveSpeed * Time.deltaTime);
     }
 }

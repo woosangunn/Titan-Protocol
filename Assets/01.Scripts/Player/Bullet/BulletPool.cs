@@ -8,58 +8,92 @@ using System.Collections.Generic;
 /// </summary>
 public class BulletPool : MonoBehaviour
 {
-    public static BulletPool Instance { get; private set; }   // 싱글톤 참조
+    public static BulletPool Instance { get; private set; }
 
-    [Header("Pool 설정")]
-    public GameObject bulletPrefab;      // 풀링할 총알 프리팹
-    public int initialPoolSize = 50;     // 초기 생성 개수
+    [Header("풀 타입별 총알 프리팹")]
+    public GameObject playerBulletPrefab;
+    public GameObject enemyBulletPrefab;
 
-    private Queue<GameObject> pool = new Queue<GameObject>(); // 풀 큐
+    public int initialSize = 50;
 
-    void Awake()
+    private Dictionary<BulletType, Queue<Bullet>> pools = new Dictionary<BulletType, Queue<Bullet>>();
+
+    private void Awake()
     {
-        // 싱글톤 중복 방지
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        Instance = this;
 
-        // 초기 객체 생성
-        for (int i = 0; i < initialPoolSize; i++)
-            pool.Enqueue(CreateBullet());
+        Instance = this;
+        InitPool(BulletType.Player, playerBulletPrefab);
+        InitPool(BulletType.Enemy, enemyBulletPrefab);
     }
 
-    /// <summary>
-    /// 풀에서 총알 하나 꺼내 반환.
-    /// 풀에 없으면 새로 만들고 바로 반환.
-    /// </summary>
-    public GameObject GetBullet(Vector2 pos, Quaternion rot)
+    private void InitPool(BulletType type, GameObject prefab)
     {
-        GameObject bullet = (pool.Count > 0) ? pool.Dequeue() : CreateBullet();
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[BulletPoolManager] {type} 프리팹이 비어 있습니다.");
+            return;
+        }
 
-        bullet.transform.position = pos;
-        bullet.transform.rotation = rot;
-        bullet.SetActive(true);            // 활성화
+        Queue<Bullet> pool = new Queue<Bullet>();
+        for (int i = 0; i < initialSize; i++)
+        {
+            Bullet bullet = CreateBullet(prefab, type);
+            pool.Enqueue(bullet);
+        }
+
+        pools[type] = pool;
+    }
+
+    private Bullet CreateBullet(GameObject prefab, BulletType type)
+    {
+        GameObject obj = Instantiate(prefab);
+        Bullet bullet = obj.GetComponent<Bullet>();
+        bullet.bulletType = type;
+        obj.SetActive(false);
         return bullet;
     }
 
-    /// <summary>
-    /// 총알을 풀에 되돌려 재사용.
-    /// Bullet 스크립트에서 호출.
-    /// </summary>
-    public void ReturnBullet(GameObject bullet)
+    public Bullet GetBullet(BulletType type, Vector2 pos, Quaternion rot)
     {
-        bullet.SetActive(false);
-        pool.Enqueue(bullet);
+        if (!pools.TryGetValue(type, out Queue<Bullet> pool) || pool.Count == 0)
+        {
+            Debug.LogWarning($"[BulletPoolManager] {type} 풀 부족 → 새로 생성");
+            Bullet newBullet = CreateBullet(GetPrefab(type), type);
+            return ActivateBullet(newBullet, pos, rot);
+        }
+
+        Bullet bullet = pool.Dequeue();
+        return ActivateBullet(bullet, pos, rot);
     }
 
-    // 총알 프리팹 실체를 생성하고 풀에 넣을 준비
-    private GameObject CreateBullet()
+    private Bullet ActivateBullet(Bullet bullet, Vector2 pos, Quaternion rot)
     {
-        GameObject obj = Instantiate(bulletPrefab);
-        obj.SetActive(false);
-        return obj;
+        bullet.transform.SetPositionAndRotation(pos, rot);
+        bullet.gameObject.SetActive(true);
+        return bullet;
+    }
+
+    public void ReturnBullet(Bullet bullet)
+    {
+        bullet.gameObject.SetActive(false);
+        if (!pools.ContainsKey(bullet.bulletType))
+            pools[bullet.bulletType] = new Queue<Bullet>();
+
+        pools[bullet.bulletType].Enqueue(bullet);
+    }
+
+    private GameObject GetPrefab(BulletType type)
+    {
+        return type switch
+        {
+            BulletType.Player => playerBulletPrefab,
+            BulletType.Enemy => enemyBulletPrefab,
+            _ => null
+        };
     }
 }

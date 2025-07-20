@@ -9,11 +9,11 @@ public class SuicideAttack : EnemyAttackBase
         if (player == null) return;
 
         float distance = Vector2.Distance(controller.transform.position, player.transform.position);
-        if (distance <= controller.stats.AttackRange)
+        if (distance <= controller.Stats.AttackRange)
         {
             IDamageable damageable = player.GetComponent<IDamageable>();
-            damageable?.TakeDamage(controller.stats.Damage * 3);
-            Destroy(controller.gameObject);
+            damageable?.TakeDamage(controller.Stats.Damage * 3);
+            Object.Destroy(controller.gameObject);
         }
     }
 }

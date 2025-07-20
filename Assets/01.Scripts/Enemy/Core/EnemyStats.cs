@@ -11,8 +11,15 @@ public class EnemyStats : ScriptableObject
 
     [HideInInspector] public int CurrentHealth;
 
-    private void OnEnable()
+    public void InitializeRuntimeValues()
     {
         CurrentHealth = MaxHealth;
+    }
+
+    public EnemyStats Clone()
+    {
+        EnemyStats clone = Instantiate(this);
+        clone.InitializeRuntimeValues();
+        return clone;
     }
 }

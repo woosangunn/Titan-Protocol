@@ -9,6 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3b0ba1a761e4834eb35c4c3fcad4d2a, type: 3}
-  m_Name: MeleesEnemy
+  m_Script: {fileID: 11500000, guid: 0b419a3cbe1ccca4686e8febdc09daa5, type: 3}
+  m_Name: ChaseMove
   m_EditorClassIdentifier: 

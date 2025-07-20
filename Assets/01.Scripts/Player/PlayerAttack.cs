@@ -54,7 +54,7 @@ public class PlayerAttack : MonoBehaviour
         Vector2 dir = (targetPos - firePos).normalized;
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
 
-        GameObject bullet = BulletPool.Instance.GetBullet(firePos, Quaternion.Euler(0, 0, angle));
+        Bullet bullet = BulletPool.Instance.GetBullet(BulletType.Player, firePos, Quaternion.Euler(0, 0, angle));
 
         var rb = bullet.GetComponent<Rigidbody2D>();
         if (rb != null)

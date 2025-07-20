@@ -9,6 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d735d91bfdea5a43b3d6a6774ab486c, type: 3}
-  m_Name: StatsEnemy
+  m_Script: {fileID: 11500000, guid: 404ff53928d80f34a9a71be366ed54ea, type: 3}
+  m_Name: KitePlayerMove
   m_EditorClassIdentifier: 
+  minDistance: 4
+  maxDistance: 6

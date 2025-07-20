@@ -2,13 +2,29 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour, IDamageable
 {
-    public EnemyStats stats;
+    [Header("References")]
+    public EnemyStats baseStats; // 템플릿
+
+    [HideInInspector] public EnemyStats Stats; // 복제본
     public EnemyBrain brain;
+
+    public float LastAttackTime { get; set; } // 개별 쿨타임
+
+    private void Awake()
+    {
+        if (baseStats == null)
+        {
+            Debug.LogError("[EnemyController] baseStats가 설정되지 않았습니다.");
+            return;
+        }
+
+        Stats = baseStats.Clone();
+    }
 
     public void TakeDamage(int amount)
     {
-        stats.CurrentHealth -= amount;
-        if (stats.CurrentHealth <= 0)
+        Stats.CurrentHealth -= amount;
+        if (Stats.CurrentHealth <= 0)
             Die();
     }
 
