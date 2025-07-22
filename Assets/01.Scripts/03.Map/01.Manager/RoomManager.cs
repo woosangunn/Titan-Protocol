@@ -1,21 +1,25 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class RoomManager : MonoBehaviour
 {
     public static RoomManager Instance { get; private set; }
 
+    [Header("Room Prefabs")]
     public GameObject startRoomPrefab;
     public GameObject combatRoomPrefab;
     public GameObject treasureRoomPrefab;
     public GameObject shopRoomPrefab;
     public GameObject bossRoomPrefab;
 
+    [Header("Settings")]
     public int roomCount = 10;
-    public Vector2 roomSize = new Vector2(20, 12); // 각 방 사이 거리
+    public Vector2 roomSize = new Vector2(20, 12);
 
     private Dictionary<Vector2Int, RoomData> roomMap;
     private Vector2Int currentPos;
+
+    private IRoomSpawner spawner;
 
     void Awake()
     {
@@ -24,44 +28,51 @@ public class RoomManager : MonoBehaviour
 
     void Start()
     {
-        var generator = new MapGenerator();
-        roomMap = generator.GenerateMap(roomCount);
+        roomMap = new MapGenerator().GenerateMap(roomCount);
         currentPos = Vector2Int.zero;
+
+        // 원하는 전략으로 선택
+        spawner = new RoomSpawner_Active(this);       // 또는 new RoomSpawner_Instantiate(this)
+
+        // 사전 생성 방식일 경우 전체 생성
+        if (spawner is RoomSpawner_Active)
+        {
+            foreach (var kv in roomMap)
+            {
+                Vector2 pos = kv.Key * roomSize;
+                spawner.SpawnRoom(kv.Value, pos);
+                spawner.DespawnRoom(kv.Value);
+            }
+        }
+
         LoadRoom(currentPos);
     }
 
     public void TryMove(Vector2Int dir)
     {
-        Vector2Int targetPos = currentPos + dir;
-        if (!roomMap.ContainsKey(targetPos))
+        Vector2Int nextPos = currentPos + dir;
+        if (!roomMap.ContainsKey(nextPos))
         {
             Debug.Log("이동할 방이 없음");
             return;
         }
 
-        LoadRoom(targetPos);
+        LoadRoom(nextPos);
     }
 
     void LoadRoom(Vector2Int pos)
     {
-        // 이전 방 비활성화
-        if (roomMap.ContainsKey(currentPos) && roomMap[currentPos].instance != null)
-            roomMap[currentPos].instance.SetActive(false);
+        spawner.DespawnRoom(roomMap[currentPos]);
 
-        RoomData room = roomMap[pos];
+        RoomData targetRoom = roomMap[pos];
+        Vector2 worldPos = (Vector2)pos * roomSize;
+        spawner.SpawnRoom(targetRoom, worldPos);
 
-        // 아직 프리팹이 없다면 생성
-        if (room.instance == null)
-        {
-            room.instance = Instantiate(GetPrefab(room.type), (Vector2)pos * roomSize, Quaternion.identity);
-        }
-
-        room.instance.SetActive(true);
-        room.state = RoomState.Discovered;
+        targetRoom.state = RoomState.Discovered;
         currentPos = pos;
     }
 
-    GameObject GetPrefab(RoomType type)
+    public GameObject GetPrefab(RoomType type)
     {
         return type switch
         {
@@ -70,7 +81,7 @@ public class RoomManager : MonoBehaviour
             RoomType.Treasure => treasureRoomPrefab,
             RoomType.Shop => shopRoomPrefab,
             RoomType.Boss => bossRoomPrefab,
-            _ => combatRoomPrefab,
+            _ => combatRoomPrefab
         };
     }
 
