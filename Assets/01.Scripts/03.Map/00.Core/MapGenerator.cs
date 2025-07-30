@@ -22,13 +22,15 @@ public class MapGenerator
 
         PlaceMandatoryRooms();
         GenerateNormalRooms();
-        SetNeighbors();
+
+        SetNeighborsAndDoors(); // 문 위치 및 인접 방 방향 설정 꼭 호출 필요
 
         return roomMap;
     }
 
     private void PlaceMandatoryRooms()
     {
+        // 시작방 무조건 (0,0)
         RoomData startRoom = CreateRoom(RoomType.Start, Vector2Int.zero);
         roomMap.Add(Vector2Int.zero, startRoom);
 
@@ -65,11 +67,11 @@ public class MapGenerator
         return room;
     }
 
-    private Vector2 GetRandomSize()
+    private Vector2Int GetRandomSize()
     {
         int width = Random.Range(10, 20);
         int height = Random.Range(8, 16);
-        return new Vector2(width, height);
+        return new Vector2Int(width, height);
     }
 
     private RoomType GetRandomNormalRoomType()
@@ -88,21 +90,46 @@ public class MapGenerator
             if (!roomMap.ContainsKey(pos))
                 return pos;
         }
-        return new Vector2Int(1, 0);
+        return new Vector2Int(1, 0); // 실패 시 기본값
     }
 
-    private void SetNeighbors()
+    private void SetNeighborsAndDoors()
     {
         foreach (var kvp in roomMap)
         {
             RoomData room = kvp.Value;
             room.neighborDirs.Clear();
+            room.doorLocalPositions.Clear();
 
             foreach (Vector2Int dir in directions)
             {
-                if (roomMap.ContainsKey(room.position + dir))
+                Vector2Int neighborPos = room.position + dir;
+                if (roomMap.ContainsKey(neighborPos))
+                {
                     room.neighborDirs.Add(dir);
+
+                    Vector2Int doorLocalPos = GetDoorLocalPosition(room.size, dir);
+                    room.doorLocalPositions.Add(doorLocalPos);
+                }
             }
+
+            Debug.Log($"[MapGenerator] Room at {room.position} has {room.doorLocalPositions.Count} doors.");
         }
+    }
+
+    private Vector2Int GetDoorLocalPosition(Vector2Int roomSize, Vector2Int dir)
+    {
+        Vector2Int center = roomSize / 2;
+
+        if (dir == Vector2Int.up)
+            return new Vector2Int(center.x, roomSize.y - 1);
+        else if (dir == Vector2Int.down)
+            return new Vector2Int(center.x, 0);
+        else if (dir == Vector2Int.left)
+            return new Vector2Int(0, center.y);
+        else if (dir == Vector2Int.right)
+            return new Vector2Int(roomSize.x - 1, center.y);
+
+        return center;
     }
 }
