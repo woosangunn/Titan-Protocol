@@ -1,102 +1,68 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using System.Collections.Generic;
 using MyGame.Map;
+using System.Collections.Generic;
 
 public class RoomTileRenderer : MonoBehaviour
 {
-    [Header("Tilemaps")]
     public Tilemap floorTilemap;
     public Tilemap wallTilemap;
-
-    [Header("Tiles")]
     public TileBase floorTile;
     public TileBase wallTile;
-    public TileBase doorClosedTile;
-    public TileBase doorOpenTile;
+    public TileBase doorTile;
+    public GameObject doorPrefab;
 
-    [Header("Prefabs")]
-    public GameObject doorTriggerPrefab;
-
-    private List<GameObject> spawnedTriggers = new();
+    private List<GameObject> spawnedDoors = new();
 
     public void ClearTiles()
     {
         floorTilemap.ClearAllTiles();
         wallTilemap.ClearAllTiles();
-
-        foreach (var obj in spawnedTriggers)
-            Destroy(obj);
-        spawnedTriggers.Clear();
+        foreach (var door in spawnedDoors)
+            Destroy(door);
+        spawnedDoors.Clear();
     }
 
     public void DrawRoom(RoomData room, Vector3Int origin)
     {
-        Vector2Int size = room.size;
-
-        for (int x = 0; x < size.x; x++)
+        for (int x = 0; x < room.tileSize.x; x++)
         {
-            for (int y = 0; y < size.y; y++)
+            for (int y = 0; y < room.tileSize.y; y++)
             {
-                Vector3Int pos = new(x, y, 0);
-                floorTilemap.SetTile(pos + origin, floorTile);
+                Vector3Int tilePos = origin + new Vector3Int(x, y, 0);
+                floorTilemap.SetTile(tilePos, floorTile);
 
-                bool isEdge = x == 0 || y == 0 || x == size.x - 1 || y == size.y - 1;
-                if (isEdge)
-                    wallTilemap.SetTile(pos + origin, wallTile);
+                if (x == 0 || x == room.tileSize.x - 1 || y == 0 || y == room.tileSize.y - 1)
+                    wallTilemap.SetTile(tilePos, wallTile);
             }
         }
 
-        SpawnDoors(room, origin);
+        foreach (Vector2Int localPos in room.doorLocalPositions)
+        {
+            Vector3Int tilePos = origin + (Vector3Int)localPos;
+            if (doorTile != null) wallTilemap.SetTile(tilePos, doorTile);
+
+            Vector3 worldPos = wallTilemap.CellToWorld(tilePos) + new Vector3(0f, 0f);
+            GameObject door = Instantiate(doorPrefab, worldPos, Quaternion.identity);
+            DoorTrigger trigger = door.GetComponent<DoorTrigger>();
+            trigger.direction = GetDirectionFromDoor(localPos, room.tileSize);
+            trigger.roomLoader = FindAnyObjectByType<RoomLoader>();
+            spawnedDoors.Add(door);
+        }
     }
 
-    private void SpawnDoors(RoomData room, Vector3Int origin)
+    private Vector2Int GetDirectionFromDoor(Vector2Int localPos, Vector2Int tileSize)
     {
-        if (room.doorLocalPositions.Count == 0)
-        {
-            Debug.LogWarning($"[RoomTileRenderer] {room.position} 문 정보 없음!");
-            return;
-        }
-
-        for (int i = 0; i < room.doorLocalPositions.Count; i++)
-        {
-            Vector2Int localPos = room.doorLocalPositions[i];
-            Vector3Int tilePos = new(localPos.x, localPos.y, 0);
-            Vector3Int worldTilePos = tilePos + origin;
-
-            wallTilemap.SetTile(worldTilePos, doorClosedTile);
-
-            if (doorTriggerPrefab != null)
-            {
-                Vector3 worldPos = wallTilemap.CellToWorld(worldTilePos) + new Vector3(0.5f, 0.5f);
-                GameObject trigger = Instantiate(doorTriggerPrefab, worldPos, Quaternion.identity);
-                trigger.SetActive(false);
-
-                DoorTrigger doorTrigger = trigger.GetComponent<DoorTrigger>();
-
-                // room.neighborDirs와 doorLocalPositions의 순서가 일치한다고 가정하고 direction 세팅
-                doorTrigger.direction = room.neighborDirs[i];
-
-                spawnedTriggers.Add(trigger);
-            }
-            else
-            {
-                Debug.LogWarning("doorTriggerPrefab이 비어 있습니다.");
-            }
-        }
+        if (localPos.x == 0) return Vector2Int.left;
+        if (localPos.x == tileSize.x - 1) return Vector2Int.right;
+        if (localPos.y == 0) return Vector2Int.down;
+        if (localPos.y == tileSize.y - 1) return Vector2Int.up;
+        return Vector2Int.zero;
     }
-
 
     public void OpenAllDoors()
     {
-        foreach (var obj in spawnedTriggers)
-        {
-            if (obj == null) continue;
-
-            obj.GetComponent<DoorTrigger>()?.Open();
-
-            Vector3Int cell = wallTilemap.WorldToCell(obj.transform.position);
-            wallTilemap.SetTile(cell, doorOpenTile);
-        }
+        foreach (var door in spawnedDoors)
+            door.GetComponent<DoorTrigger>()?.Open();
     }
 }

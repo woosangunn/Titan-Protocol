@@ -3,31 +3,18 @@ using System.Collections.Generic;
 
 namespace MyGame.Map
 {
-    public enum RoomType
-    {
-        Start,
-        Combat,
-        Shop,
-        Item,
-        Boss
-    }
-
-    public enum RoomState
-    {
-        Unvisited,
-        Discovered,
-        Cleared
-    }
+    public enum RoomType { Start, Combat, Shop, Item, Boss }
+    public enum RoomState { Unvisited, Discovered, Cleared }
 
     public class RoomData
     {
-        public Vector2Int position;
+        public Vector2Int cellPosition;     // 맵 그리드 상 위치
+        public Vector2Int cellSize;         // 셀 단위 방 크기 (ex: 2x2 셀)
+        public Vector2Int tileSize;         // 타일 단위 방 크기 (cellSize * tilePerCell)
         public RoomType type;
         public RoomState state = RoomState.Unvisited;
-        public Vector2Int size;
-        public List<Vector2Int> neighborDirs = new();
 
-        // 새로 추가된 문 위치 (타일맵 내 로컬 좌표 기준)
+        public List<Vector2Int> neighborDirs = new();
         public List<Vector2Int> doorLocalPositions = new();
     }
 }

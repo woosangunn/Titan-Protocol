@@ -1573,8 +1573,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomCount: 15
-  roomSizeMin: {x: 8, y: 8}
-  roomSizeMax: {x: 12, y: 12}
+  roomUnitSize: 10
 --- !u!1 &1142177730
 GameObject:
   m_ObjectHideFlags: 0
@@ -1884,7 +1883,7 @@ GameObject:
   - component: {fileID: 1407869022}
   - component: {fileID: 1407869024}
   - component: {fileID: 1407869023}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall_Tilemap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2312,9 +2311,8 @@ MonoBehaviour:
   wallTilemap: {fileID: 1407869022}
   floorTile: {fileID: 11400000, guid: ef2d9ee513035a546895c7ccbb15b8d3, type: 2}
   wallTile: {fileID: 11400000, guid: 251a4edaef098834e817e95170ed822c, type: 2}
-  doorClosedTile: {fileID: 11400000, guid: b1e15425540f9a2449d2177f1bb83894, type: 2}
-  doorOpenTile: {fileID: 11400000, guid: 5b02d912b2ae2b54e80f39b8d527c49c, type: 2}
-  doorTriggerPrefab: {fileID: 6341952939382584780, guid: 4271b359e6025144282a4c4c0e782a17, type: 3}
+  doorTile: {fileID: 11400000, guid: b1e15425540f9a2449d2177f1bb83894, type: 2}
+  doorPrefab: {fileID: 6341952939382584780, guid: 4271b359e6025144282a4c4c0e782a17, type: 3}
 --- !u!1 &1490849683
 GameObject:
   m_ObjectHideFlags: 0

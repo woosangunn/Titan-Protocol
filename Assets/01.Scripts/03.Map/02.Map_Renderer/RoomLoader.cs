@@ -20,12 +20,9 @@ public class RoomLoader : MonoBehaviour
     public void TryMove(Vector2Int dir)
     {
         Vector2Int next = currentRoomCoord + dir;
-
-        Debug.Log($"[RoomLoader] TryMove 호출: 현재={currentRoomCoord}, 방향={dir}, 다음={next}");
-
         if (roomManager.GetRoomAt(next) == null)
         {
-            Debug.LogWarning($"이동 불가: 방이 없음 {next}");
+            Debug.LogWarning($"이동할 수 없는 방향: {dir}");
             return;
         }
 
@@ -45,12 +42,11 @@ public class RoomLoader : MonoBehaviour
         tileRenderer.ClearTiles();
 
         Vector3Int origin = Vector3Int.zero;
-        tileRenderer.DrawRoom(room, origin);
+        tileRenderer.DrawRoom(room, origin);  // tileSize 기반으로 그려야 함
 
-        Vector2Int size = room.size;
-        player.position = origin + new Vector3(size.x, size.y) * 0.5f;
-
-        Debug.Log($"[RoomLoader] {room.position} 방 로드 완료. 문 수: {room.doorLocalPositions.Count}");
+        // 변경된 부분: tileSize 기준으로 중앙 위치 계산
+        Vector2Int tileSize = room.tileSize;
+        player.position = origin + new Vector3(tileSize.x, tileSize.y) * 0.5f;
 
         SpawnEnemiesAndTrack(room);
     }
@@ -59,13 +55,7 @@ public class RoomLoader : MonoBehaviour
     {
         GameObject trackerObj = new GameObject("EnemyTracker");
         EnemyTracker tracker = trackerObj.AddComponent<EnemyTracker>();
-
-        tracker.OnAllEnemiesDefeated += () =>
-        {
-            tileRenderer.OpenAllDoors();
-            Debug.Log("방 클리어됨 - 문 열림");
-        };
-
-        tracker.ForceClear(); // 테스트 중 즉시 클리어
+        tracker.OnAllEnemiesDefeated += () => tileRenderer.OpenAllDoors();
+        tracker.ForceClear(); // 테스트용
     }
 }
