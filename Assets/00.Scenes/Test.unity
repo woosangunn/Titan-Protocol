@@ -1573,7 +1573,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomCount: 15
-  roomUnitSize: 10
+  roomUnitSize: 6
 --- !u!1 &1142177730
 GameObject:
   m_ObjectHideFlags: 0

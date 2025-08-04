@@ -1,9 +1,6 @@
 using UnityEngine;
 using MyGame.Map;
 
-/// <summary>
-/// 플레이어 위치에 따라 방을 로드하고, 적 추적 및 문 제어를 담당
-/// </summary>
 public class RoomLoader : MonoBehaviour
 {
     public RoomManager roomManager;
@@ -39,16 +36,20 @@ public class RoomLoader : MonoBehaviour
             return;
         }
 
-        tileRenderer.ClearTiles();
-
-        Vector3Int origin = Vector3Int.zero;
-        tileRenderer.DrawRoom(room, origin);  // tileSize 기반으로 그려야 함
-
-        // 변경된 부분: tileSize 기준으로 중앙 위치 계산
-        Vector2Int tileSize = room.tileSize;
-        player.position = origin + new Vector3(tileSize.x, tileSize.y) * 0.5f;
-
+        RenderRoom(room);
+        PositionPlayer(room);
         SpawnEnemiesAndTrack(room);
+    }
+
+    private void RenderRoom(RoomData room)
+    {
+        tileRenderer.ClearTiles();
+        tileRenderer.DrawRoom(room, Vector3Int.zero);
+    }
+
+    private void PositionPlayer(RoomData room)
+    {
+        player.position = room.GetTileCenterWorldPos();
     }
 
     private void SpawnEnemiesAndTrack(RoomData room)
