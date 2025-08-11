@@ -2,20 +2,9 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 
-/// <summary>
-/// 체인 게이지 UI 처리
-/// - 시작 시 정확한 값(30/30)으로 즉시 표시
-/// - 값 변경 시 1씩 빠르게 증감
-/// - 게이지 비율에 따라 텍스트 색상이 흰 → 검으로 보간
-/// </summary>
 public class PlayerChainUI : MonoBehaviour
 {
-    [Header("UI")]
-    [Tooltip("체인 게이지 텍스트")]
     public TMP_Text chainText;
-
-    [Header("애니메이션")]
-    [Tooltip("숫자 1씩 변화할 때 딜레이")]
     public float animSpeed = 0.02f;
 
     private PlayerGrappleHandler grapple;
@@ -26,7 +15,6 @@ public class PlayerChainUI : MonoBehaviour
 
     void Awake()
     {
-        // PlayerGrappleHandler 자동 탐색
         grapple = Object.FindFirstObjectByType<PlayerGrappleHandler>();
         if (grapple == null)
         {
@@ -38,13 +26,11 @@ public class PlayerChainUI : MonoBehaviour
 
     void Start()
     {
-        // Awake 이후 정확한 초기 상태로 UI 동기화
         displayGauge = grapple.CurrentGauge;
         maxGauge = grapple.maxGauge;
 
-        SetText(displayGauge, maxGauge); // 즉시 표시
+        SetText(displayGauge, maxGauge);
 
-        // 게이지 변경 이벤트 구독
         grapple.OnGaugeChanged += OnGaugeChanged;
     }
 
@@ -54,14 +40,10 @@ public class PlayerChainUI : MonoBehaviour
             grapple.OnGaugeChanged -= OnGaugeChanged;
     }
 
-    /// <summary>
-    /// PlayerGrappleHandler에서 게이지 변경 이벤트 발생 시 호출
-    /// </summary>
     private void OnGaugeChanged(int current, int max)
     {
         maxGauge = max;
 
-        // 애니메이션 중복 방지
         if (animateRoutine != null)
             StopCoroutine(animateRoutine);
 
@@ -71,13 +53,9 @@ public class PlayerChainUI : MonoBehaviour
             return;
         }
 
-        // 수치 변화 애니메이션 시작
         animateRoutine = StartCoroutine(AnimateGaugeChange(current));
     }
 
-    /// <summary>
-    /// 게이지 수치를 1씩 증가/감소시키며 애니메이션 처리
-    /// </summary>
     IEnumerator AnimateGaugeChange(int target)
     {
         while (displayGauge != target)
@@ -90,9 +68,6 @@ public class PlayerChainUI : MonoBehaviour
         animateRoutine = null;
     }
 
-    /// <summary>
-    /// 텍스트 및 색상 보간 적용
-    /// </summary>
     private void SetText(int cur, int max)
     {
         chainText.text = $"CHAIN: {cur} / {max}";
