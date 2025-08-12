@@ -28,6 +28,7 @@ public class DoorRenderer : MonoBehaviour
             if (door.TryGetComponent(out DoorTrigger trigger))
             {
                 trigger.direction = doorData.direction;
+                trigger.roomLoader = loader;
 
                 if (room.type != RoomType.Combat)
                     trigger.Open();

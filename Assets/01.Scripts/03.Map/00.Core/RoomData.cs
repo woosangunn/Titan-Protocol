@@ -17,5 +17,15 @@ namespace MyGame.Map
         public List<Vector2Int> obstaclePositions = new();
 
         public Vector2 GetTileCenterWorldPos() => new Vector2(tileSize.x, tileSize.y) * 0.5f;
+
+        public Vector2Int? GetDoorTilePosition(Vector2Int direction)
+        {
+            foreach (var door in doors)
+            {
+                if (door.direction == direction)
+                    return door.localPosition;
+            }
+            return null;
+        }
     }
 }

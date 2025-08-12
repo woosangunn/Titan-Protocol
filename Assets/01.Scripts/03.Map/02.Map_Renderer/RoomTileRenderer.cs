@@ -9,7 +9,7 @@ public class RoomTileRenderer : MonoBehaviour
     public Tilemap wallTilemap;
 
     [Header("Tiles")]
-    public TileBase floorTile; 
+    public TileBase[] floorTile; 
     public TileBase wallTile; 
     public TileBase obstacleTile; 
 
@@ -37,7 +37,8 @@ public class RoomTileRenderer : MonoBehaviour
             {
                 Vector3Int tilePos = origin + new Vector3Int(x, y, 0);
 
-                floorTilemap.SetTile(tilePos, floorTile);
+                TileBase randomTile = floorTile[Random.Range(0, floorTile.Length)];
+                floorTilemap.SetTile(tilePos, randomTile);
 
                 if (IsBorder(x, y, room.tileSize))
                     wallTilemap.SetTile(tilePos, wallTile);

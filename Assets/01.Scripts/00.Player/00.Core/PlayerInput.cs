@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class PlayerInput : MonoBehaviour
 {
+    SpriteRenderer spriteRenderer;
+
     public Vector2 Move { get; private set; }
     public Vector2 LastMove { get; private set; }
     public bool DashPressed { get; private set; }
@@ -9,12 +11,24 @@ public class PlayerInput : MonoBehaviour
     public bool RightClick { get; private set; }
     public Vector2 MouseWorldPos2D => Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
+    public void Awake()
+    {
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+    }
     public void HandleInput()
     {
         float h = 0f, v = 0f;
 
         if (Input.GetKey(KeyCode.A)) h -= 1f;
+        if(h != 0)
+        {
+            spriteRenderer.flipX = h > 0;
+        }
         if (Input.GetKey(KeyCode.D)) h += 1f;
+        if (h != 0)
+        {
+            spriteRenderer.flipX = h < 0;
+        }
 
         if (Input.GetKey(KeyCode.W)) v += 1f;
         if (Input.GetKey(KeyCode.S)) v -= 1f;
@@ -30,3 +44,4 @@ public class PlayerInput : MonoBehaviour
         RightClick = Input.GetMouseButtonDown(1);
     }
 }
+

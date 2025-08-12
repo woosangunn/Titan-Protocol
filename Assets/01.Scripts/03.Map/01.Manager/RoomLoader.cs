@@ -10,6 +10,8 @@ public class RoomLoader : MonoBehaviour
 
     private Vector2Int currentRoomCoord = Vector2Int.zero;
 
+    private Vector2Int lastMoveDir = Vector2Int.zero;
+
     private void Start()
     {
         LoadRoom(currentRoomCoord);
@@ -25,6 +27,7 @@ public class RoomLoader : MonoBehaviour
             return;
         }
 
+        lastMoveDir = dir;
         currentRoomCoord = next;
         LoadRoom(currentRoomCoord);
     }
@@ -39,7 +42,19 @@ public class RoomLoader : MonoBehaviour
 
         roomRenderer.Render(room, Vector3Int.zero, this);
 
-        playerPositioner.MoveToRoomCenter(room);
+        if (lastMoveDir == Vector2Int.zero)
+        {
+            // 초기 시작 방일 때는 그냥 방 중앙으로 이동
+            playerPositioner.MoveToRoomCenter(room);
+        }
+        else
+        {
+            Vector2Int oppositeDir = new Vector2Int(-lastMoveDir.x, -lastMoveDir.y);
+            bool movedToDoor = playerPositioner.MoveToDoorFront(room, oppositeDir, lastMoveDir);
+
+            if (!movedToDoor)
+                playerPositioner.MoveToRoomCenter(room);
+        }
 
         if (room.type == RoomType.Combat && room.state != RoomState.Cleared)
         {
